@@ -1,0 +1,7 @@
+"filename", "language", "JSON", "TypeScript", "JavaScript", "comment", "blank", "total"
+"/home/tosin/Desktop/datt_server/package-lock.json", "JSON", 2236, 0, 0, 0, 1, 2237
+"/home/tosin/Desktop/datt_server/package.json", "JSON", 34, 0, 0, 0, 1, 35
+"/home/tosin/Desktop/datt_server/src/index.js", "JavaScript", 0, 0, 379, 1, 1, 381
+"/home/tosin/Desktop/datt_server/src/index.ts", "TypeScript", 0, 352, 0, 1, 83, 436
+"/home/tosin/Desktop/datt_server/tsconfig.json", "JSON", 15, 0, 0, 0, 4, 19
+"Total", "-", 2285, 352, 379, 2, 90, 3108
