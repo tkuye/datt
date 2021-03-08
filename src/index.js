@@ -51,10 +51,10 @@ app.use(cors_1.default());
 client.connect()
     .then(() => console.log('connect success'))
     .catch((err) => console.log('connect error'));
-app.get('/', (req, res) => {
+app.get('/api/v1/', (req, res) => {
     res.send('Hello There');
 });
-app.post('/', (req, res) => {
+app.post('/api/v1/', (req, res) => {
     const currentUser = `SELECT username, password, user_id FROM passwds WHERE username = $1`;
     const newSession = 'UPDATE sessions SET session_id=$1, user_id=$2 WHERE user_id = $3';
     client.query(currentUser, [req.body.username]).then(response => {
@@ -83,7 +83,7 @@ app.post('/', (req, res) => {
         console.log(err);
     });
 });
-app.post('/email-request', (req, res) => {
+app.post('/api/v1/email-request', (req, res) => {
     console.log(req.body);
     const templateParams = {
         from: '"Tosin Kuye" <tkuye77@gmail.com>"',
@@ -107,7 +107,7 @@ app.post('/email-request', (req, res) => {
     });
     res.sendStatus(200);
 });
-app.get('/int-number', (req, res) => {
+app.get('/api/v1/int-number', (req, res) => {
     console.log(req.query.id);
     let InterestQuery = "SELECT int_total FROM interest_total WHERE id_event=$1";
     client.query(InterestQuery, [req.query.id]).then(response => {
@@ -115,7 +115,7 @@ app.get('/int-number', (req, res) => {
         res.send(response.rows[0]);
     });
 });
-app.post('/edit', (req, res) => {
+app.post('/api/v1/edit', (req, res) => {
     switch (req.body.tbname) {
         case 'events':
             let eventQuery = `UPDATE events SET event_name=$1, event_date=$2, iframe_form=$4, upcoming=$5 WHERE event_id = $3 RETURNING image, event_id`;
@@ -165,7 +165,7 @@ app.post('/edit', (req, res) => {
             break;
     }
 });
-app.post('/post', (req, res) => {
+app.post('/api/v1/post', (req, res) => {
     let type = req.body.type.split('/')[1];
     switch (req.body.tblname) {
         case "blogs":
@@ -217,7 +217,7 @@ app.post('/post', (req, res) => {
             });
     }
 });
-app.get('/carousel', (req, res) => {
+app.get('/api/v1/carousel', (req, res) => {
     console.log('hello');
     const params = { Bucket: process.env.bucket, Prefix: process.env.carousel };
     s3.listObjects(params, (err, data) => __awaiter(void 0, void 0, void 0, function* () {
@@ -242,7 +242,7 @@ app.get('/carousel', (req, res) => {
         }
     }));
 });
-app.get('/events', (req, res) => {
+app.get('/api/v1/events', (req, res) => {
     const getSignedUrl = (item) => __awaiter(void 0, void 0, void 0, function* () {
         return Promise.all([new Promise((resolve, reject) => {
                 const params = { Bucket: process.env.bucket, Key: "events/" + item.event_id };
@@ -275,7 +275,7 @@ app.get('/events', (req, res) => {
         });
     });
 });
-app.delete('/post', (req, res) => {
+app.delete('/api/v1/post', (req, res) => {
     let type = req.query.type;
     if (type === 'blogs') {
         let deleteS3 = "SELECT image FROM blogs WHERE blog_id = $1";
@@ -305,7 +305,7 @@ app.delete('/post', (req, res) => {
     let deleteQuery = `DELETE FROM ${type} WHERE ${String(type).slice(0, -1)}_id = $1`;
     client.query(deleteQuery, [req.query.id]);
 });
-app.post('/user', (req, res) => {
+app.post('/api/v1/user', (req, res) => {
     if (req.body.key) {
         if (req.body.imgtype && !req.body.vidtype) {
             const imgType = `.${req.body.imgtype.split('/')[1]}`;
@@ -373,7 +373,7 @@ app.post('/user', (req, res) => {
     }
 });
 //})
-app.get('/blog-image', (req, res) => {
+app.get('/api/v1/blog-image', (req, res) => {
     const params = {
         Key: "blogs/" + req.query.key,
         Bucket: process.env.bucket
@@ -382,7 +382,7 @@ app.get('/blog-image', (req, res) => {
         res.send(url);
     });
 });
-app.get('/user', (req, res) => {
+app.get('/api/v1/user', (req, res) => {
     const getUser = "SELECT name, description, img_location FROM user_desc WHERE user_id = $1";
     client.query(getUser, [req.query.id]).then((result) => {
         if (result.rowCount > 0) {
@@ -396,7 +396,7 @@ app.get('/user', (req, res) => {
         }
     });
 });
-app.get('/users', (req, res) => {
+app.get('/api/v1/users', (req, res) => {
     const getSignedUrl = (item) => __awaiter(void 0, void 0, void 0, function* () {
         return Promise.all([new Promise((resolve, reject) => {
                 const params = { Bucket: process.env.bucket, Key: item.img_location };
@@ -430,7 +430,7 @@ app.get('/users', (req, res) => {
         });
     });
 });
-app.post('/new-user', (req, res) => {
+app.post('/api/v1/new-user', (req, res) => {
     const newUser = "INSERT INTO passwds (username, password) VALUES ($1, $2)";
     bcrypt_1.default.hash(req.body.password, saltRounds, (err, hash) => {
         if (err)
@@ -439,30 +439,30 @@ app.post('/new-user', (req, res) => {
         res.send('success');
     });
 });
-app.post('/existing-user', (req, res) => {
+app.post('/api/v1/existing-user', (req, res) => {
     const checkUser = "SELECT username FROM passwds WHERE username = $1";
     client.query(checkUser, [req.body.username]).then((result) => {
         result.rowCount > 0 ? res.send(true) : res.send(false);
     });
 });
-app.get('/mission', (req, res) => {
+app.get('/api/v1/mission', (req, res) => {
     const getMission = "SELECT * FROM mission";
     client.query(getMission).then((result) => {
         res.send(result.rows[0]);
     });
 });
-app.post('/mission', (req, res) => {
+app.post('/api/v1/mission', (req, res) => {
     const sendMission = "UPDATE mission SET name = $1";
     client.query(sendMission, [req.body.mission]);
     res.sendStatus(200);
 });
-app.get('/interest', (req, res) => {
+app.get('/api/v1/interest', (req, res) => {
     const interestQuery = "SELECT e.event_name, i.int_total FROM interest_total i INNER JOIN events e ON i.id_event = e.event_id;";
     client.query(interestQuery).then(result => {
         res.send(result.rows);
     });
 });
-app.get('/emails', (req, res) => {
+app.get('/api/v1/emails', (req, res) => {
     const emailQuery = "SELECT email FROM emails";
     client.query(emailQuery).then(result => {
         let file = new String();
@@ -472,20 +472,20 @@ app.get('/emails', (req, res) => {
         res.send(file);
     });
 });
-app.put('/new-interest', (req, res) => {
+app.put('/api/v1/new-interest', (req, res) => {
     const newInterestQuery = "UPDATE interest_total SET int_total = int_total + 1 WHERE id_event= $1 RETURNING int_total";
     req.body.id;
     client.query(newInterestQuery, [req.body.id]).then(result => {
         res.send(result.rows[0]);
     });
 });
-app.get('/current-interest', (req, res) => {
+app.get('/api/v1/current-interest', (req, res) => {
     const currentInterestQuery = "SELECT int_total FROM interest_total WHERE id_event= $1";
     client.query(currentInterestQuery, [req.query.id]).then((result) => {
         res.send(result.rows[0]);
     });
 });
-app.get('/blogs', (req, res) => {
+app.get('/api/v1/blogs', (req, res) => {
     const getSignedUrl = (item) => __awaiter(void 0, void 0, void 0, function* () {
         return Promise.all([new Promise((resolve, reject) => {
                 const params = { Bucket: process.env.bucket, Key: "blogs/" + item.blog_id };
@@ -518,13 +518,13 @@ app.get('/blogs', (req, res) => {
         });
     });
 });
-app.post('/email', (req, res) => {
+app.post('/api/v1/email', (req, res) => {
     const emailQuery = "INSERT INTO emails (email) VALUES ($1)";
     client.query(emailQuery, [req.body.email]).then(() => {
         res.sendStatus(200);
     });
 });
-app.get('/blog', (req, res) => {
+app.get('/api/v1/blog', (req, res) => {
     let blogQuery = "SELECT b.blog_title, b.blog_id, b.blog_date, b.blog_details, b.img_key, u.name FROM blogs b INNER JOIN user_desc u ON b.user_id = u.user_id WHERE b.blog_id = $1";
     client.query(blogQuery, [req.query.id]).then(results => {
         const params = { Bucket: process.env.bucket, Key: "blogs/" + results.rows[0].img_key };
@@ -536,4 +536,4 @@ app.get('/blog', (req, res) => {
 });
 const path = require('path');
 app.get('*', (req, res) => { res.sendFile(path.join(__dirname, '../build/index.html')); });
-app.listen(8000, () => console.log('server started on port http://localhost:8000'));
+app.listen(8000);
