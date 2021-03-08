@@ -1,2 +1,0 @@
-(this.webpackJsonpdatt=this.webpackJsonpdatt||[]).push([[21],{306:function(t,e,n){"use strict";n.r(e);var a=n(14),c=(n(0),n(9)),i=n(1);e.default=function(t){Object(a.a)(t);return Object(i.jsx)("div",{className:"user-admin",onClick:function(){c.a.get("/emails").then((function(t){var e=new Blob([t.data],{type:"text/plain"}),n=document.createElement("a");n.href=window.URL.createObjectURL(e),n.download="emails.txt",n.click()}))},children:Object(i.jsx)("h2",{children:"Current Email Listing"})})}}}]);
-//# sourceMappingURL=21.5e519d17.chunk.js.map

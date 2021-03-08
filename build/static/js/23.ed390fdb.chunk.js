@@ -1,0 +1,2 @@
+(this.webpackJsonpdatt=this.webpackJsonpdatt||[]).push([[23],{304:function(t,e,n){"use strict";n.r(e);n(1);var o=n(0);e.default=function(){return Object(o.jsx)("div",{id:"logout",children:Object(o.jsx)("h2",{onClick:function(){document.cookie="userauth=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/admin",document.cookie="userid=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/admin",document.location.reload()},children:"Logout"})})}}}]);
+//# sourceMappingURL=23.ed390fdb.chunk.js.map
