@@ -22,35 +22,42 @@ const aws_sdk_1 = __importDefault(require("aws-sdk"));
 const dotenv_1 = __importDefault(require("dotenv"));
 const nodemailer_1 = __importDefault(require("nodemailer"));
 dotenv_1.default.config();
+
 const transporter = nodemailer_1.default.createTransport({
     service: "Gmail",
     auth: {
-        user: process.env.email,
-        pass: process.env.emailpassword
+        user: process.env.EMAIL,
+        pass: process.env.EMAILPASS
     }
 });
+console.log(process.env.ACCESSKEY)
+console.log(process.env.PGUSER)
+console.log(process.env.NODE_ENV)
 aws_sdk_1.default.config.update({
     signatureVersion: 'v4',
-    accessKeyId: process.env.accessKeyId,
-    secretAccessKey: process.env.secretAccessKey,
+    accessKeyId: process.env.ACCESSKEY,
+    secretAccessKey: process.env.SECRETKEY,
     region: 'us-west-1'
 });
+
 const s3 = new aws_sdk_1.default.S3();
 const saltRounds = 10;
 const app = express_1.default();
 const client = new pg_1.Client({
     host: 'localhost',
     port: 5432,
-    user: process.env.datauser,
-    password: process.env.datapassword
+    user: process.env.PGUSER,
+    password: process.env.PGPASSWORD,
+    database:process.env.DATABASE
 });
+
 app.use(express_1.default.static(`${__dirname}/../build`));
 app.use(body_parser_1.default.json());
 app.use(body_parser_1.default.urlencoded());
 app.use(cors_1.default());
 client.connect()
     .then(() => console.log('connect success'))
-    .catch((err) => console.log('connect error'));
+    .catch((err) => console.log('error'));
 app.get('/api/v1/', (req, res) => {
     res.send('Hello There');
 });
@@ -120,8 +127,8 @@ app.post('/api/v1/edit', (req, res) => {
         case 'events':
             let eventQuery = `UPDATE events SET event_name=$1, event_date=$2, iframe_form=$4, upcoming=$5 WHERE event_id = $3 RETURNING image, event_id`;
             client.query(eventQuery, [req.body.title, req.body.date, req.body.id, req.body.iframe, req.body.upcoming]).then(results => {
-                const params = { Bucket: process.env.bucket, Key: "events/" + results.rows[0].event_id };
-                const imageParams = { Bucket: process.env.bucket, Key: "events/" + results.rows[0].image };
+                const params = { Bucket: process.env.BUCKET, Key: "events/" + results.rows[0].event_id };
+                const imageParams = { Bucket: process.env.BUCKET, Key: "events/" + results.rows[0].image };
                 Promise.all([new Promise((resolve, reject) => {
                         s3.getSignedUrl("putObject", params, (err, url) => {
                             if (err)
@@ -143,8 +150,8 @@ app.post('/api/v1/edit', (req, res) => {
         case 'blogs':
             let blogQuery = `UPDATE blogs SET blog_title=$1, blog_date=$2 WHERE blog_id = $3 RETURNING image, blog_id`;
             client.query(blogQuery, [req.body.title, req.body.date, req.body.id]).then((results) => {
-                const params = { Bucket: process.env.bucket, Key: "blogs/" + results.rows[0].blog_id };
-                const imageParams = { Bucket: process.env.bucket, Key: "blogs/" + results.rows[0].image };
+                const params = { Bucket: process.env.BUCKET, Key: "blogs/" + results.rows[0].blog_id };
+                const imageParams = { Bucket: process.env.BUCKET, Key: "blogs/" + results.rows[0].image };
                 Promise.all([new Promise((resolve, reject) => {
                         s3.getSignedUrl("putObject", params, (err, url) => {
                             if (err)
@@ -171,8 +178,8 @@ app.post('/api/v1/post', (req, res) => {
         case "blogs":
             let blogQuery = `INSERT INTO ${req.body.tblname}(blog_title, blog_date, user_id, image) VALUES($1, $2, $3, $4) RETURNING blog_id`;
             client.query(blogQuery, [req.body.title, req.body.date, req.body.id, encodeURIComponent(req.body.title) + `.${type}`]).then(results => {
-                const params = { Bucket: process.env.bucket, Key: "blogs/" + results.rows[0].blog_id };
-                const imageParams = { Bucket: process.env.bucket, Key: "blogs/" + encodeURIComponent(req.body.title) + `.${type}` };
+                const params = { Bucket: process.env.BUCKET, Key: "blogs/" + results.rows[0].blog_id };
+                const imageParams = { Bucket: process.env.BUCKET, Key: "blogs/" + encodeURIComponent(req.body.title) + `.${type}` };
                 Promise.all([new Promise((resolve, reject) => {
                         s3.getSignedUrl("putObject", params, (err, url) => {
                             if (err)
@@ -196,8 +203,8 @@ app.post('/api/v1/post', (req, res) => {
             client.query(eventQuery, [req.body.title, req.body.date, encodeURIComponent(req.body.title) + `.${type}`, req.body.iframe, req.body.upcoming]).then((result) => {
                 let eventInterest = `INSERT INTO interest_total (int_total, id_event) VALUES ($1, $2)`;
                 client.query(eventInterest, [0, result.rows[0].event_id]);
-                const params = { Bucket: process.env.bucket, Key: "events/" + result.rows[0].event_id };
-                const imageParams = { Bucket: process.env.bucket, Key: "events/" + encodeURIComponent(req.body.title) + `.${type}` };
+                const params = { Bucket: process.env.BUCKET, Key: "events/" + result.rows[0].event_id };
+                const imageParams = { Bucket: process.env.BUCKET, Key: "events/" + encodeURIComponent(req.body.title) + `.${type}` };
                 Promise.all([new Promise((resolve, reject) => {
                         s3.getSignedUrl("putObject", params, (err, url) => {
                             if (err)
@@ -219,7 +226,7 @@ app.post('/api/v1/post', (req, res) => {
 });
 app.get('/api/v1/carousel', (req, res) => {
     console.log('hello');
-    const params = { Bucket: process.env.bucket, Prefix: process.env.carousel };
+    const params = { Bucket: process.env.BUCKET, Prefix: process.env.CAROUSEL };
     s3.listObjects(params, (err, data) => __awaiter(void 0, void 0, void 0, function* () {
         if (err)
             console.log(err);
@@ -228,7 +235,7 @@ app.get('/api/v1/carousel', (req, res) => {
                 let key = row.Key;
                 if ((key === null || key === void 0 ? void 0 : key.includes('.png')) || (key === null || key === void 0 ? void 0 : key.includes('.jpg'))) {
                     return new Promise((resolve, reject) => {
-                        const carouselParams = { Bucket: process.env.bucket, Key: key };
+                        const carouselParams = { Bucket: process.env.BUCKET, Key: key };
                         s3.getSignedUrl("getObject", carouselParams, (err, url) => {
                             if (err)
                                 reject(err);
@@ -245,7 +252,7 @@ app.get('/api/v1/carousel', (req, res) => {
 app.get('/api/v1/events', (req, res) => {
     const getSignedUrl = (item) => __awaiter(void 0, void 0, void 0, function* () {
         return Promise.all([new Promise((resolve, reject) => {
-                const params = { Bucket: process.env.bucket, Key: "events/" + item.event_id };
+                const params = { Bucket: process.env.BUCKET, Key: "events/" + item.event_id };
                 s3.getSignedUrl("getObject", params, (err, url) => {
                     if (err) {
                         reject(err);
@@ -253,7 +260,7 @@ app.get('/api/v1/events', (req, res) => {
                     resolve(url);
                 });
             }), new Promise((resolve, reject) => {
-                const params = { Bucket: process.env.bucket, Key: "events/" + item.image };
+                const params = { Bucket: process.env.BUCKET, Key: "events/" + item.image };
                 s3.getSignedUrl("getObject", params, (err, url) => {
                     if (err) {
                         reject(err);
@@ -280,7 +287,7 @@ app.delete('/api/v1/post', (req, res) => {
     if (type === 'blogs') {
         let deleteS3 = "SELECT image FROM blogs WHERE blog_id = $1";
         client.query(deleteS3, [req.query.id]).then(result => {
-            const params = { Bucket: process.env.bucket, Key: 'blogs/' + result.rows[0].image };
+            const params = { Bucket: process.env.BUCKET, Key: 'blogs/' + result.rows[0].image };
             s3.deleteObject(params, (err, data) => {
                 if (err)
                     throw err;
@@ -290,14 +297,14 @@ app.delete('/api/v1/post', (req, res) => {
     else if (type === "events") {
         let deleteS3 = "SELECT image FROM blogs WHERE event_id = $1";
         client.query(deleteS3, [req.query.id]).then(result => {
-            const params = { Bucket: process.env.bucket, Key: 'events/' + result.rows[0].image };
+            const params = { Bucket: process.env.BUCKET, Key: 'events/' + result.rows[0].image };
             s3.deleteObject(params, (err, data) => {
                 if (err)
                     throw err;
             });
         });
     }
-    const deleteParams = { Bucket: process.env.bucket, Key: type + '/' + req.query.id };
+    const deleteParams = { Bucket: process.env.BUCKET, Key: type + '/' + req.query.id };
     s3.deleteObject(deleteParams, (err, data) => {
         if (err)
             throw err;
@@ -311,7 +318,7 @@ app.post('/api/v1/user', (req, res) => {
             const imgType = `.${req.body.imgtype.split('/')[1]}`;
             const params = {
                 Key: req.body.key + imgType,
-                Bucket: process.env.bucket,
+                Bucket: process.env.BUCKET,
                 ContentType: 'application/octet-stream'
             };
             const setUser = "INSERT INTO user_desc (name, description, img_location, user_id) VALUES ($1, $2, $3, $4) ON CONFLICT (user_id) DO UPDATE SET name=$1, description=$2, img_location=$3";
@@ -324,7 +331,7 @@ app.post('/api/v1/user', (req, res) => {
             const vidType = `.${req.body.vidtype.split('/')[1]}`;
             const vidParams = {
                 Key: req.body.key + vidType,
-                Bucket: process.env.bucket,
+                Bucket: process.env.BUCKET,
                 ContentType: 'application/octet-stream'
             };
             const setUser = "INSERT INTO user_desc (name, description, video, user_id) VALUES ($1, $2, $3, $4) ON CONFLICT (user_id) DO UPDATE SET name=$1, description=$2, video=$3";
@@ -338,12 +345,12 @@ app.post('/api/v1/user', (req, res) => {
             const imgType = `.${req.body.imgtype.split('/')[1]}`;
             const params = {
                 Key: req.body.key + imgType,
-                Bucket: process.env.bucket,
+                Bucket: process.env.BUCKET,
                 ContentType: 'application/octet-stream'
             };
             const vidParams = {
                 Key: req.body.key + vidType,
-                Bucket: process.env.bucket,
+                Bucket: process.env.BUCKET,
                 ContentType: 'application/octet-stream'
             };
             const setUser = "INSERT INTO user_desc (name, description, img_location, user_id, video) VALUES ($1, $2, $3, $4, $5) ON CONFLICT (user_id) DO UPDATE SET name=$1, description=$2, img_location=$3, video=$5";
@@ -376,7 +383,7 @@ app.post('/api/v1/user', (req, res) => {
 app.get('/api/v1/blog-image', (req, res) => {
     const params = {
         Key: "blogs/" + req.query.key,
-        Bucket: process.env.bucket
+        Bucket: process.env.BUCKET
     };
     s3.getSignedUrl('getObject', params, (err, url) => {
         res.send(url);
@@ -386,7 +393,7 @@ app.get('/api/v1/user', (req, res) => {
     const getUser = "SELECT name, description, img_location FROM user_desc WHERE user_id = $1";
     client.query(getUser, [req.query.id]).then((result) => {
         if (result.rowCount > 0) {
-            const params = { Bucket: process.env.bucket, Key: result.rows[0].img_location };
+            const params = { Bucket: process.env.BUCKET, Key: result.rows[0].img_location };
             s3.getSignedUrl("getObject", params, (err, url) => {
                 res.send({ rows: result.rows, url });
             });
@@ -399,7 +406,7 @@ app.get('/api/v1/user', (req, res) => {
 app.get('/api/v1/users', (req, res) => {
     const getSignedUrl = (item) => __awaiter(void 0, void 0, void 0, function* () {
         return Promise.all([new Promise((resolve, reject) => {
-                const params = { Bucket: process.env.bucket, Key: item.img_location };
+                const params = { Bucket: process.env.BUCKET, Key: item.img_location };
                 s3.getSignedUrl("getObject", params, (err, url) => {
                     if (err) {
                         reject(err);
@@ -407,7 +414,7 @@ app.get('/api/v1/users', (req, res) => {
                     resolve(url);
                 });
             }), new Promise((resolve, reject) => {
-                const params = { Bucket: process.env.bucket, Key: item.video };
+                const params = { Bucket: process.env.BUCKET, Key: item.video };
                 s3.getSignedUrl("getObject", params, (err, url) => {
                     if (err) {
                         reject(err);
@@ -488,7 +495,7 @@ app.get('/api/v1/current-interest', (req, res) => {
 app.get('/api/v1/blogs', (req, res) => {
     const getSignedUrl = (item) => __awaiter(void 0, void 0, void 0, function* () {
         return Promise.all([new Promise((resolve, reject) => {
-                const params = { Bucket: process.env.bucket, Key: "blogs/" + item.blog_id };
+                const params = { Bucket: process.env.BUCKET, Key: "blogs/" + item.blog_id };
                 s3.getSignedUrl("getObject", params, (err, url) => {
                     if (err) {
                         reject(err);
@@ -496,7 +503,7 @@ app.get('/api/v1/blogs', (req, res) => {
                     resolve(url);
                 });
             }), new Promise((resolve, reject) => {
-                const params = { Bucket: process.env.bucket, Key: "blogs/" + item.image };
+                const params = { Bucket: process.env.BUCKET, Key: "blogs/" + item.image };
                 s3.getSignedUrl("getObject", params, (err, url) => {
                     if (err) {
                         reject(err);
@@ -527,7 +534,7 @@ app.post('/api/v1/email', (req, res) => {
 app.get('/api/v1/blog', (req, res) => {
     let blogQuery = "SELECT b.blog_title, b.blog_id, b.blog_date, b.blog_details, b.img_key, u.name FROM blogs b INNER JOIN user_desc u ON b.user_id = u.user_id WHERE b.blog_id = $1";
     client.query(blogQuery, [req.query.id]).then(results => {
-        const params = { Bucket: process.env.bucket, Key: "blogs/" + results.rows[0].img_key };
+        const params = { Bucket: process.env.BUCKET, Key: "blogs/" + results.rows[0].img_key };
         s3.getSignedUrl("getObject", params, (err, url) => {
             results.rows[0].url = url;
             res.send(results.rows[0]);
