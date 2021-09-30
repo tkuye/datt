@@ -1,0 +1,3 @@
+[submodule "datt_front"]
+	path = datt_front
+	url = https://github.com/tkuye/datt_front
